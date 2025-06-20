@@ -1,8 +1,11 @@
 import csv
 import re
-from googletrans import Translator
+import os
+import openai
+from math import ceil
 
-translator = Translator()
+# Load OpenAI client
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "")
 
 # Tone mark mapping
 tone_marks = {
@@ -32,34 +35,55 @@ def convert_phrase(phrase):
     syllables = phrase.strip().split()
     return ' '.join(apply_tone(s) for s in syllables)
 
-def translate_to_chinese(english):
+def batch_translate_to_chinese(english_phrases):
+    prompt = "Translate the following English phrases into Simplified Chinese. Return only the Chinese translations in order, numbered as in the list:\n\n"
+    prompt += "\n".join(f"{i+1}. {phrase}" for i, phrase in enumerate(english_phrases))
+    
     try:
-        result = translator.translate(english, src='en', dest='zh-CN')
-        return result.text
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that translates English into Simplified Chinese."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
+        )
+        result = response.choices[0].message.content.strip()
+        lines = result.splitlines()
+        chinese_translations = []
+        for line in lines:
+            if ". " in line:
+                chinese = line.split(". ", 1)[-1].strip()
+                chinese_translations.append(chinese)
+        return chinese_translations
     except Exception as e:
-        print(f"\nTranslation error: {e}")
-        return ''
+        print(f"\nError during translation batch: {e}")
+        return [''] * len(english_phrases)  # fallback
 
-def convert_csv(input_file='export.csv', output_file='vocab.csv'):
-    # Read input first to count total lines
+def convert_csv(input_file='export.csv', output_file='vocab.csv', batch_size=20):
     with open(input_file, newline='', encoding='utf-8') as infile:
         reader = list(csv.reader(infile))
-        total = len(reader) - 1  # exclude header
-        data_rows = reader[1:]  # skip header
+        rows = reader[1:]  # skip header
+
+    shorthand_pinyins = [row[0] for row in rows]
+    english_phrases = [row[1] for row in rows]
+    true_pinyins = [convert_phrase(p) for p in shorthand_pinyins]
+
+    chinese_translations = []
+    total_batches = ceil(len(english_phrases) / batch_size)
+
+    for i in range(0, len(english_phrases), batch_size):
+        batch = english_phrases[i:i + batch_size]
+        translated = batch_translate_to_chinese(batch)
+        chinese_translations.extend(translated)
+        percent = int(((i + batch_size) / len(english_phrases)) * 100)
+        print(f"\rProgress: {min(percent, 100)}%", end='', flush=True)
 
     with open(output_file, 'w', newline='', encoding='utf-8') as outfile:
         writer = csv.writer(outfile)
         writer.writerow(['Pinyin', 'Chinese', 'English'])
-
-        for i, row in enumerate(data_rows):
-            shorthand_pinyin, english = row
-            pinyin = convert_phrase(shorthand_pinyin)
-            chinese = translate_to_chinese(english)
+        for pinyin, chinese, english in zip(true_pinyins, chinese_translations, english_phrases):
             writer.writerow([pinyin, chinese, english])
-
-            # Show progress
-            percent = int((i + 1) / total * 100)
-            print(f"\rProgress: {percent}%", end='', flush=True)
 
     print("\nDone!")
 
