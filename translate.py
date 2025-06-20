@@ -1,44 +1,15 @@
 import csv
-import re
+from googletrans import Translator
 
-# Tone mark mappings
-tone_marks = {
-    'a': 'āáǎàa',
-    'e': 'ēéěèe',
-    'i': 'īíǐìi',
-    'o': 'ōóǒòo',
-    'u': 'ūúǔùu',
-    'ü': 'ǖǘǚǜü'
-}
+translator = Translator()
 
-# Pinyin (with tone marks) to Chinese characters
-pinyin_to_chinese = {
-    'ài': '爱',
-    'bèi sī': '贝斯',
-    'bīng jī lín': '冰淇淋',
-    'bú cuò': '不错',
-    'bú kèqì': '不客气'
-}
-
-def apply_tone(syllable):
-    match = re.match(r"([a-zü]+)([1-5])?$", syllable)
-    if not match:
-        return syllable
-
-    body, tone = match.groups()
-    tone = int(tone) if tone else 5
-    if tone == 5 or tone < 1 or tone > 5:
-        return body
-
-    for vowel_group in ['a', 'e', 'o', 'iu', 'ui', 'i', 'u', 'ü']:
-        for vowel in vowel_group:
-            if vowel in body:
-                return re.sub(vowel, tone_marks[vowel][tone - 1], body, count=1)
-    return body
-
-def convert_phrase(phrase):
-    syllables = phrase.strip().split()
-    return ' '.join(apply_tone(syllable) for syllable in syllables)
+def translate_to_chinese(english):
+    try:
+        result = translator.translate(english, src='en', dest='zh-CN')
+        return result.text
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return ''
 
 def convert_csv(input_file='export.csv', output_file='vocab.csv'):
     with open(input_file, newline='', encoding='utf-8') as infile, \
@@ -53,8 +24,42 @@ def convert_csv(input_file='export.csv', output_file='vocab.csv'):
         for row in reader:
             shorthand_pinyin, english = row
             pinyin = convert_phrase(shorthand_pinyin)
-            chinese = pinyin_to_chinese.get(pinyin, '')  # Leave blank if not found
+            chinese = translate_to_chinese(english)
             writer.writerow([pinyin, chinese, english])
 
-# Run the conversion
+# Keep your apply_tone() and convert_phrase() from earlier
+# Include here for completeness:
+
+import re
+
+tone_marks = {
+    'a': 'āáǎàa',
+    'e': 'ēéěèe',
+    'i': 'īíǐìi',
+    'o': 'ōóǒòo',
+    'u': 'ūúǔùu',
+    'ü': 'ǖǘǚǜü'
+}
+
+def apply_tone(syllable):
+    match = re.match(r"([a-zü]+)([1-5])?$", syllable)
+    if not match:
+        return syllable
+
+    body, tone = match.groups()
+    tone = int(tone) if tone else 5
+    if tone == 5:
+        return body
+
+    for vowel_group in ['a', 'e', 'o', 'iu', 'ui', 'i', 'u', 'ü']:
+        for vowel in vowel_group:
+            if vowel in body:
+                return re.sub(vowel, tone_marks[vowel][tone - 1], body, count=1)
+    return body
+
+def convert_phrase(phrase):
+    syllables = phrase.strip().split()
+    return ' '.join(apply_tone(s) for s in syllables)
+
+# Run the final conversion
 convert_csv()
