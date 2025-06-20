@@ -44,7 +44,7 @@ def convert_csv(input_file='export.csv', output_file='vocab.csv'):
         writer = csv.writer(outfile)
 
         header = next(reader)
-        writer.writerow(['Chinese Pinyin', 'English'])
+        writer.writerow(['Pinyin', 'English'])
 
         for row in reader:
             shorthand_pinyin, english = row

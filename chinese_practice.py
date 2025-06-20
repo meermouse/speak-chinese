@@ -4,6 +4,7 @@ import pygame
 import time
 import os
 import keyboard
+import random
 
 def speak(text, lang, filename):
     tts = gTTS(text=text, lang=lang)
@@ -19,13 +20,15 @@ def speak(text, lang, filename):
     pygame.mixer.music.unload()
     os.remove(filename)
 
-# Load vocab
+# Load and shuffle vocab
 df = pd.read_csv("vocab.csv")
+shuffled_indices = list(df.index)
+random.shuffle(shuffled_indices)
 
 index = 0
-while index < len(df):
-    row = df.iloc[index]
-    pinyin = str(row['Chinese Pinyin'])
+while index < len(shuffled_indices):
+    row = df.loc[shuffled_indices[index]]
+    pinyin = str(row['Pinyin'])
     english = str(row['English'])
 
     print(f"\n{pinyin} - {english}")
@@ -36,7 +39,6 @@ while index < len(df):
 
     print("Press [Enter] to continue, [Space] to repeat.")
 
-    # Wait for either Enter or Space
     while True:
         if keyboard.is_pressed("enter"):
             index += 1
