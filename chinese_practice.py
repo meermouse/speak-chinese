@@ -21,7 +21,7 @@ def speak(text, lang, filename):
     os.remove(filename)
 
 # Load and shuffle vocab
-df = pd.read_csv("vocab.csv")
+df = pd.read_csv("vocab.csv")  # Make sure it has: Pinyin,Chinese,English
 shuffled_indices = list(df.index)
 random.shuffle(shuffled_indices)
 
@@ -29,12 +29,16 @@ index = 0
 while index < len(shuffled_indices):
     row = df.loc[shuffled_indices[index]]
     pinyin = str(row['Pinyin'])
+    chinese = str(row['Chinese'])
     english = str(row['English'])
 
-    print(f"\n{pinyin} - {english}")
+    print(f"\n{pinyin} ({chinese}) - {english}")
 
-    speak(pinyin, "zh-cn", "pinyin.mp3")
+    # Speak the Chinese characters (more accurate tones)
+    speak(chinese, "zh-cn", "chinese.mp3")
     time.sleep(0.5)
+
+    # Speak the English translation
     speak(english, "en", "english.mp3")
 
     print("Press [Enter] to continue, [Space] to repeat.")
