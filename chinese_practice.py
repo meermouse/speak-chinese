@@ -4,7 +4,10 @@ import pygame
 import time
 import os
 import keyboard
+import sys
 import random
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 def speak(text, lang, filename):
     tts = gTTS(text=text, lang=lang)
