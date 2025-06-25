@@ -35,16 +35,23 @@ def convert_phrase(phrase):
     syllables = phrase.strip().split()
     return ' '.join(apply_tone(s) for s in syllables)
 
-def batch_translate_to_chinese(english_phrases):
-    prompt = "Translate the following English phrases into Simplified Chinese. Return only the Chinese translations in order, numbered as in the list:\n\n"
-    prompt += "\n".join(f"{i+1}. {phrase}" for i, phrase in enumerate(english_phrases))
+def batch_translate_to_chinese(english_phrases, pinyin_phrases):
+    prompt = (
+        "Translate the following English phrases into Simplified Chinese. "
+        "Each item includes the English meaning and the expected Pinyin pronunciation. "
+        "Return only the matching Chinese characters (no English or Pinyin), one per line, numbered.\n\n"
+    )
+
+    combined = "\n".join(
+        f"{i+1}. English: {eng} | Pinyin: {pin}" for i, (eng, pin) in enumerate(zip(english_phrases, pinyin_phrases))
+    )
     
     try:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that translates English into Simplified Chinese."},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": "You are a precise Chinese translator who uses both English and Pinyin to find the correct characters."},
+                {"role": "user", "content": prompt + combined}
             ],
             temperature=0.3
         )
@@ -58,7 +65,7 @@ def batch_translate_to_chinese(english_phrases):
         return chinese_translations
     except Exception as e:
         print(f"\nError during translation batch: {e}")
-        return [''] * len(english_phrases)  # fallback
+        return [''] * len(english_phrases)
 
 def convert_csv(input_file='export.csv', output_file='vocab.csv', batch_size=20):
     with open(input_file, newline='', encoding='utf-8') as infile:
@@ -74,7 +81,7 @@ def convert_csv(input_file='export.csv', output_file='vocab.csv', batch_size=20)
 
     for i in range(0, len(english_phrases), batch_size):
         batch = english_phrases[i:i + batch_size]
-        translated = batch_translate_to_chinese(batch)
+        translated = batch_translate_to_chinese(english_phrases[i:i + batch_size], true_pinyins[i:i + batch_size])
         chinese_translations.extend(translated)
         percent = int(((i + batch_size) / len(english_phrases)) * 100)
         print(f"\rProgress: {min(percent, 100)}%", end='', flush=True)
