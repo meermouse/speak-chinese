@@ -35,14 +35,15 @@ while index < len(shuffled_indices):
     chinese = str(row['Chinese'])
     english = str(row['English'])
 
-    print(f"\n{pinyin} ({chinese}) - {english}")
-
-    # Speak Chinese characters (with tones)
-    speak(chinese, "zh-cn", "chinese.mp3")
-    time.sleep(0.5)
+    print(f"\n{pinyin} ({english} - {chinese})")
 
     # Speak English
     speak(english, "en", "english.mp3")
+
+    time.sleep(0.25)
+
+    # Speak Chinese characters (with tones)
+    speak(chinese, "zh-cn", "chinese.mp3")
 
     print("Press [↓] to continue, [↑] to repeat this pair.")
 
