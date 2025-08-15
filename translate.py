@@ -3,6 +3,7 @@ import re
 import os
 import openai
 from math import ceil
+from datetime import date
 
 # Load OpenAI client
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY") or "")
@@ -78,6 +79,7 @@ def convert_csv(input_file='export.csv', output_file='vocab.csv', batch_size=20)
 
     chinese_translations = []
     total_batches = ceil(len(english_phrases) / batch_size)
+    today_str = date.today().isoformat()  # e.g., '2025-08-15'
 
     for i in range(0, len(english_phrases), batch_size):
         batch = english_phrases[i:i + batch_size]
@@ -88,9 +90,9 @@ def convert_csv(input_file='export.csv', output_file='vocab.csv', batch_size=20)
 
     with open(output_file, 'w', newline='', encoding='utf-8') as outfile:
         writer = csv.writer(outfile)
-        writer.writerow(['Pinyin', 'Chinese', 'English'])
+        writer.writerow(['Pinyin', 'Chinese', 'English', 'DateAdded'])
         for pinyin, chinese, english in zip(true_pinyins, chinese_translations, english_phrases):
-            writer.writerow([pinyin, chinese, english])
+            writer.writerow([pinyin, chinese, english, today_str])
 
     print("\nDone!")
 
