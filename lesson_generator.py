@@ -77,7 +77,7 @@ def generate_lesson_rows(lesson_number):
         pinyin_with_marks = [convert_pinyin_line(p) for p in pinyin_raw]
 
         # Batch translate to Chinese characters
-        from your_module import batch_translate_to_chinese  # <- adjust this import if needed
+        from translate import batch_translate_to_chinese  # <- adjust this import if needed
         chinese_list = batch_translate_to_chinese(english_phrases, pinyin_with_marks)
 
         # Package into row-like dicts

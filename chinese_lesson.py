@@ -51,13 +51,12 @@ if __name__ == "__main__":
     # For now, just print the lesson number
     print(f"Starting Chinese lesson {lesson_number}")
 
-    # Example placeholder list of rows
-    sample_data = [
-        {"Pinyin": "nǐ hǎo", "Chinese": "你好", "English": "hello"},
-        {"Pinyin": "zàijiàn", "Chinese": "再见", "English": "goodbye"}
-    ]
+    from lesson_generator import generate_lesson_rows
 
-    df = pd.DataFrame(sample_data)
+    lesson_number = sys.argv[1]
+    lesson_rows = generate_lesson_rows(lesson_number)
+
+    df = pd.DataFrame(lesson_rows)
 
     index = 0
     while index < len(df):
